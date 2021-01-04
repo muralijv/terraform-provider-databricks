@@ -557,12 +557,15 @@ var resourcesMap map[string]importable = map[string]importable{
 			return nil
 		},
 		Import: func(ic *importContext, r *resource) error {
-			if l, err := access.NewSecretsAPI(ic.Client).List(r.ID); err == nil {
-				for _, secret := range l {
-					ic.Emit(&resource{
-						Resource: "databricks_secret",
-						ID:       fmt.Sprintf("%s|||%s", r.ID, secret.Key),
-					})
+			backendType, _ := r.Data.GetOk("backend_type")
+			if backendType != "AZURE_KEYVAULT" {
+				if l, err := access.NewSecretsAPI(ic.Client).List(r.ID); err == nil {
+					for _, secret := range l {
+						ic.Emit(&resource{
+							Resource: "databricks_secret",
+							ID:       fmt.Sprintf("%s|||%s", r.ID, secret.Key),
+						})
+					}
 				}
 			}
 			if l, err := access.NewSecretAclsAPI(ic.Client).List(r.ID); err == nil {
